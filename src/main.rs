@@ -1,59 +1,40 @@
-extern crate web_sys;
+mod three;
+mod dom;
 
 use wasm_bindgen::prelude::*;
 
+
 //noinspection RsUnresolvedReference
-fn main() -> Result<(), JsValue> {
+fn main() -> Result<(), dom::Error> {
 	wasm_logger::init(wasm_logger::Config::default());
 	log::info!("Boo!");
-	let document = web_sys::window().unwrap().document().unwrap();
-	let body = document.body().expect("document should have a body");
-	let canvas = document.create_element("canvas")?;
-	let canvas: web_sys::HtmlCanvasElement = canvas
-		.dyn_into::<web_sys::HtmlCanvasElement>()
-		.map_err(|_| ())
-		.unwrap();
-	let context = canvas
-		.get_context("2d")
-		.unwrap()
-		.unwrap()
-		.dyn_into::<web_sys::CanvasRenderingContext2d>()
-		.unwrap();
+	let window = dom::window();
+	let inner_width: JsValue = window.inner_width()?;
+	let inner_height: JsValue = window.inner_height()?;
+	let inner_width = inner_width.as_f64().unwrap();
+	let inner_height = inner_height.as_f64().unwrap();
+	log::info!("width: {}, height: {}", inner_width, inner_height);
+	let body = dom::body();
+	let scene = three::Scene::new();
+	let camera = three::PerspectiveCamera::new(75.0, inner_width / inner_height, 0.11, 1000.0);
+	let renderer = three::WebGLRenderer::new();
+	renderer.set_size(inner_width as isize, inner_height as isize, false);
+	let dom_element = renderer.dom_element();
+	let dom_element = dom_element.dyn_into::<web_sys::Node>()?;
+	body.append_child(&dom_element)?;
+	let geometry = three::BoxGeometry::new(1.0, 1.0, 1.0);
+	let material = three::MeshBasicMaterial::new();
+	material.color().set(0.0, 255.0, 0.0);
+	let cube = three::Mesh::new(geometry, material);
+	scene.add(&cube);
+	camera.position().set_z(5.0);
 
-	context.begin_path();
-
-	// Draw the outer circle.
-	context
-		.arc(75.0, 75.0, 50.0, 0.0, std::f64::consts::PI * 2.0)
-		.unwrap();
-
-	// Draw the mouth.
-	context.move_to(110.0, 75.0);
-	context.arc(75.0, 75.0, 35.0, 0.0, std::f64::consts::PI).unwrap();
-
-	// Draw the left eye.
-	context.move_to(65.0, 65.0);
-	context
-		.arc(60.0, 65.0, 5.0, 0.0, std::f64::consts::PI * 2.0)
-		.unwrap();
-
-	// Draw the right eye.
-	context.move_to(95.0, 65.0);
-	context
-		.arc(90.0, 65.0, 5.0, 0.0, std::f64::consts::PI * 2.0)
-		.unwrap();
-
-	context.stroke();
-	body.append_child(&canvas)?;
+	let (mut x, mut y) = (0.0, 0.0);
+	dom::animate_frames(move || {
+		(x, y) = (x + 0.01, y + 0.02);
+		cube.rotation().set(x, y, 0.0);
+		renderer.render(&scene, &camera);
+		true
+	});
 	Ok(())
-}
-
-#[wasm_bindgen]
-extern "C" {
-	fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet(name: &str) {
-	alert(&format!("Hello, {}!", name));
 }
