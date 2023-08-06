@@ -6,7 +6,7 @@ pub mod builders;
 use wasm_bindgen::prelude::*;
 use dom::Window;
 use three::{PerspectiveCamera, WebGLRenderer};
-use crate::builders::VarSceneBuilder;
+use crate::builders::{VarSceneBuilder};
 use crate::dom::{Error, FrameNext};
 
 
@@ -20,14 +20,14 @@ fn main() -> Result<(), Error> {
 	const GEOMETRY: &'static str = "geometry";
 	const MATERIAL: &'static str = "material";
 	const CUBE: &'static str = "cube";
-	const ROTATION: &'static str = "rotation";
+	const CUBE_ROTATION: &'static str = "rotation";
 	let var_scene = {
 		let mut builder = VarSceneBuilder::new();
-		builder.add_val_box_geo(GEOMETRY, (2.0, 1.0, 1.0).into());
-		builder.add_val_mesh_basic_mat(MATERIAL, (255.0, 0.0, 0.0).into());
-		builder.start_var_mesh(CUBE, GEOMETRY, MATERIAL);
-		builder.add_var_mesh_rot(ROTATION, (x, y, 0.0).into());
-		builder.end_var_mesh();
+		builder.add_geo_box(GEOMETRY, (2.0, 1.0, 1.0).into());
+		builder.add_mat_mesh_basic(MATERIAL, (255.0, 0.0, 0.0).into());
+		builder.add_var_mesh(CUBE, GEOMETRY, MATERIAL);
+		builder.add_close_var_rot(CUBE_ROTATION, (x, y, 0.0).into());
+		builder.close_var_mesh();
 		builder.to_var_scene()
 	};
 	let window = Window::connect();
@@ -40,7 +40,7 @@ fn main() -> Result<(), Error> {
 	window.animate_frames(move || {
 		let increment = 0.01;
 		(x, y) = (x + increment, y + 3.0 * increment);
-		var_scene.set_mesh_rot_val(CUBE, ROTATION, (x, y, 0.0).into());
+		var_scene.update_rot_var(CUBE_ROTATION, (x, y, 0.0).into());
 		renderer.render(var_scene.as_three_scene(), &camera);
 		FrameNext::Repeat
 	});

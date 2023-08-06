@@ -31,7 +31,7 @@ impl VarSceneBuilder {
 }
 
 impl VarSceneBuilder {
-	pub fn add_val_mesh_basic_mat(&mut self, name: impl AsRef<str>, Rgb { r, g, b }: Rgb) {
+	pub fn add_mat_mesh_basic(&mut self, name: impl AsRef<str>, Rgb { r, g, b }: Rgb) {
 		let material = three::MeshBasicMaterial::new();
 		material.color().set(r, g, b);
 		let item = Item::MeshBasicMat(material);
@@ -43,7 +43,7 @@ impl VarSceneBuilder {
 }
 
 impl VarSceneBuilder {
-	pub fn add_val_box_geo(&mut self, name: impl AsRef<str>, Whd { w, h, d }: Whd) {
+	pub fn add_geo_box(&mut self, name: impl AsRef<str>, Whd { w, h, d }: Whd) {
 		let item = Item::BoxGeo(three::BoxGeometry::new(w, h, d));
 		self.items.insert(name.as_ref().to_string(), item);
 	}
@@ -59,11 +59,9 @@ pub struct VarScene {
 
 impl VarScene {
 	pub fn as_three_scene(&self) -> &three::Scene { &self.scene }
-	pub fn set_mesh_rot_val(&self, mesh_name: impl AsRef<str>, _rot_name: impl AsRef<str>, xyz: Xyz) {
-		let item = self.items.get(mesh_name.as_ref()).unwrap();
-		let var_mesh = item.as_var_mesh().unwrap();
-		if let Some(var_rot) = var_mesh.find_var_rot() {
-			var_rot.set_val(xyz)
-		}
+	pub fn update_rot_var(&self, rot_name: impl AsRef<str>, xyz: Xyz) {
+		let item = self.items.get(rot_name.as_ref()).unwrap();
+		let var_rot = item.as_var_rot().unwrap();
+		var_rot.set_val(xyz)
 	}
 }
