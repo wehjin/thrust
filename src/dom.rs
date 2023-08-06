@@ -4,35 +4,51 @@ use wasm_bindgen::prelude::*;
 
 pub type Error = JsValue;
 
-pub fn animate_frames(mut frame: impl FnMut() -> bool + 'static) {
-	fn request_animation_frame(f: &Closure<dyn FnMut()>) {
-		window().request_animation_frame(f.as_ref().unchecked_ref()).expect("should register `requestAnimationFrame` OK");
+pub struct Window(web_sys::Window);
+
+impl Window {
+	pub fn connect() -> Self {
+		let window = web_sys::window().expect("no global `window` exists");
+		Window(window)
 	}
-
-	let f = Rc::new(RefCell::new(None));
-	let g = f.clone();
-	*g.borrow_mut() = Some(Closure::new(move || {
-		let repeat = frame();
-		if repeat {
-			request_animation_frame(f.borrow().as_ref().unwrap());
-		} else {
-			f.borrow_mut().take();
+	pub fn inner_size(&self) -> (f64, f64) {
+		let (width, height) = self.js_inner_size();
+		(width.as_f64().unwrap(), height.as_f64().unwrap())
+	}
+	pub fn body(&self) -> web_sys::HtmlElement {
+		self.document().body().expect("document should have a body")
+	}
+	pub fn document(&self) -> web_sys::Document {
+		self.0.document().expect("should have a document on window")
+	}
+	pub fn animate_frames(&self, mut frame: impl FnMut() -> FrameNext + 'static) {
+		let setup_cell = Rc::new(RefCell::new(None));
+		{
+			let cleanup_cell = setup_cell.clone();
+			*setup_cell.borrow_mut() = Some(Closure::new(move || {
+				let next_frame = frame();
+				match next_frame {
+					FrameNext::Repeat => {
+						Window::connect().js_request_animation_frame(cleanup_cell.borrow().as_ref().unwrap());
+					}
+					FrameNext::Stop => {
+						cleanup_cell.borrow_mut().take();
+					}
+				}
+			}));
 		}
-	}));
-	request_animation_frame(g.borrow().as_ref().unwrap());
+		self.js_request_animation_frame(setup_cell.borrow().as_ref().unwrap());
+	}
+	fn js_request_animation_frame(&self, f: &Closure<dyn FnMut()>) {
+		self.0.request_animation_frame(f.as_ref().unchecked_ref()).expect("should register `requestAnimationFrame` OK");
+	}
+	fn js_inner_size(&self) -> (JsValue, JsValue) {
+		let (width, height): (JsValue, JsValue) = (
+			self.0.inner_width().expect("window must have inner width"),
+			self.0.inner_height().expect("window must have inner height")
+		);
+		(width, height)
+	}
 }
 
-
-pub(crate) fn window() -> web_sys::Window {
-	web_sys::window().expect("no global `window` exists")
-}
-
-fn document() -> web_sys::Document {
-	window()
-		.document()
-		.expect("should have a document on window")
-}
-
-pub(crate) fn body() -> web_sys::HtmlElement {
-	document().body().expect("document should have a body")
-}
+pub enum FrameNext { Repeat, Stop }
