@@ -1,18 +1,35 @@
 pub mod three;
 pub mod dom;
+pub mod basics;
+pub mod builders;
 
 use wasm_bindgen::prelude::*;
 use dom::Window;
-use three::{BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, WebGLRenderer};
+use three::{PerspectiveCamera, WebGLRenderer};
+use crate::builders::VarSceneBuilder;
 use crate::dom::{Error, FrameNext};
+
 
 fn main() -> Result<(), Error> {
 	wasm_logger::init(wasm_logger::Config::default());
 	log::info!("Boo!");
 
 	let (mut x, mut y) = (0.0, 0.0);
-	let cube = create_cube(x, y);
-	let scene = populate_scene(Scene::new(), &cube);
+
+
+	const GEOMETRY: &'static str = "geometry";
+	const MATERIAL: &'static str = "material";
+	const CUBE: &'static str = "cube";
+	const ROTATION: &'static str = "rotation";
+	let var_scene = {
+		let mut builder = VarSceneBuilder::new();
+		builder.add_val_box_geo(GEOMETRY, (2.0, 1.0, 1.0).into());
+		builder.add_val_mesh_basic_mat(MATERIAL, (255.0, 0.0, 0.0).into());
+		builder.start_var_mesh(CUBE, GEOMETRY, MATERIAL);
+		builder.add_var_mesh_rot(ROTATION, (x, y, 0.0).into());
+		builder.end_var_mesh();
+		builder.to_var_scene()
+	};
 	let window = Window::connect();
 	let (camera, renderer) = {
 		let (inner_width, inner_height) = window.inner_size();
@@ -21,31 +38,13 @@ fn main() -> Result<(), Error> {
 		(camera, renderer)
 	};
 	window.animate_frames(move || {
-		(x, y) = (x + 0.01, y + 0.02);
-		cube.rotation().set(x, y, 0.0);
-		renderer.render(&scene, &camera);
+		let increment = 0.01;
+		(x, y) = (x + increment, y + 3.0 * increment);
+		var_scene.set_mesh_rot_val(CUBE, ROTATION, (x, y, 0.0).into());
+		renderer.render(var_scene.as_three_scene(), &camera);
 		FrameNext::Repeat
 	});
 	Ok(())
-}
-
-fn populate_scene(scene: Scene, cube: &Mesh) -> Scene {
-	scene.add(&cube);
-	scene
-}
-
-fn create_cube(rot_x: f64, rot_y: f64) -> Mesh {
-	let geometry = BoxGeometry::new(1.0, 1.0, 1.0);
-	let material = create_material();
-	let cube = Mesh::new(geometry, material);
-	cube.rotation().set(rot_x, rot_y, 0.0);
-	cube
-}
-
-fn create_material() -> MeshBasicMaterial {
-	let material = MeshBasicMaterial::new();
-	material.color().set(0.0, 255.0, 0.0);
-	material
 }
 
 fn create_camera(z: f64, inner_width: f64, inner_height: f64) -> PerspectiveCamera {
