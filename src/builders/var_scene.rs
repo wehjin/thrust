@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use wasm_bindgen::JsCast;
 use crate::basics::{Rgb, Whd, Xyz};
 use crate::builders::{Item, VarMeshBuilder};
 use crate::three;
@@ -47,11 +48,6 @@ impl VarSceneBuilder {
 	}
 }
 
-pub struct VarScene {
-	scene: three::Scene,
-	items: HashMap<String, Item>,
-}
-
 impl VarSceneBuilder {
 	pub(crate) fn add_var_mesh(&mut self,
 	                           name: impl AsRef<str>,
@@ -80,8 +76,14 @@ impl VarSceneBuilder {
 	}
 }
 
+pub struct VarScene {
+	scene: three::Scene,
+	items: HashMap<String, Item>,
+}
+
 impl VarScene {
 	pub fn as_three_scene(&self) -> &three::Scene { &self.scene }
+	pub fn to_three_scene(&self) -> three::Scene { self.scene.clone().unchecked_into() }
 	pub fn update_rot_var(&self, rot_name: impl AsRef<str>, xyz: Xyz) {
 		let item = self.items.get(rot_name.as_ref()).unwrap();
 		let var_rot = item.as_var_rot().unwrap();

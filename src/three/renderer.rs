@@ -17,4 +17,6 @@ extern "C" {
 	pub fn render(this: &WebGLRenderer, scene: &Scene, camera: &PerspectiveCamera);
 	#[wasm_bindgen(method, js_name = "setAnimationLoop")]
 	pub fn set_animation_loop(this: &WebGLRenderer, f: &Closure<dyn FnMut(f64)>);
+	#[wasm_bindgen(method, js_name = "setPixelRatio")]
+	pub fn set_pixel_ratio(this: &WebGLRenderer, val: f64);
 }

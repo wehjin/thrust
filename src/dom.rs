@@ -21,6 +21,7 @@ impl Window {
 		let window = web_sys::window().expect("no global `window` exists");
 		Window(window)
 	}
+	pub fn as_dom_window(&self) -> &web_sys::Window { &self.0 }
 	pub fn inner_size(&self) -> (f64, f64) {
 		let (width, height) = self.js_inner_size();
 		(width.as_f64().unwrap(), height.as_f64().unwrap())
@@ -49,6 +50,12 @@ impl Window {
 		}
 		self.js_request_animation_frame(setup_cell.borrow().as_ref().unwrap());
 	}
+	pub fn add_resize_listener_with_forget(&self, f: impl FnMut(web_sys::UiEvent) + 'static) {
+		let closure = Closure::<dyn FnMut(_)>::new(f);
+		self.0.add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref()).expect("add resize listener");
+		closure.forget();
+	}
+
 	fn js_request_animation_frame(&self, f: &Closure<dyn FnMut()>) {
 		self.0.request_animation_frame(f.as_ref().unchecked_ref()).expect("should register `requestAnimationFrame` OK");
 	}

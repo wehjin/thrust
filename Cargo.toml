@@ -19,5 +19,5 @@ features = [
     "HtmlDivElement",
     "Node",
     "Window",
-    "CanvasRenderingContext2d"
+    "UiEvent",
 ]

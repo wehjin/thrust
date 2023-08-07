@@ -8,6 +8,10 @@ extern "C" {
 	pub fn new(fov: f64, aspect: f64, near: f64, far: f64) -> PerspectiveCamera;
 	#[wasm_bindgen(method, getter)]
 	pub fn position(this: &PerspectiveCamera) -> Vector3;
+	#[wasm_bindgen(method, setter)]
+	pub fn set_aspect(this: &PerspectiveCamera, val: f64);
+	#[wasm_bindgen(method, js_name = updateProjectionMatrix)]
+	pub fn update_projection_matrix(this: &PerspectiveCamera);
 }
 
 
