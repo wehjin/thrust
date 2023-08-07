@@ -3,18 +3,20 @@ pub mod dom;
 pub mod basics;
 pub mod builders;
 
+use std::f64::consts::PI;
 use wasm_bindgen::prelude::*;
 use dom::Window;
 use three::{WebGLRenderer};
 use crate::builders::{VarSceneBuilder};
 use crate::dom::{Error};
 use crate::three::PerspectiveCamera;
+use crate::three::wrap::set_animation_loop_with_forget;
 
 fn main() -> Result<(), Error> {
 	wasm_logger::init(wasm_logger::Config::default());
 	log::info!("Boo!");
 
-	let (mut x, mut y) = (0.0, 0.0);
+	let (x, y) = (0.0, 0.0);
 	const GEOMETRY: &'static str = "geometry";
 	const MATERIAL: &'static str = "material";
 	const CUBE: &'static str = "cube";
@@ -41,19 +43,15 @@ fn main() -> Result<(), Error> {
 	{
 		let frame_renderer = renderer.clone().unchecked_into::<WebGLRenderer>();
 		let frame_camera = camera.clone().unchecked_into::<PerspectiveCamera>();
-		let closure = Closure::new(move |time| {
-			let time = time / 1000.;
-			let time = time as u32;
-			log::info!("Time {}", time);
-			let increment = 0.01;
-			(x, y) = (x + increment, y + 3.0 * increment);
+		const FULL_ROTATION: f64 = 2. * PI;
+		const VELOCITY: f64 = 6. * FULL_ROTATION / 60.;
+		set_animation_loop_with_forget(&renderer, move |time| {
+			let seconds = time / 1000.;
+			let distance = VELOCITY * seconds;
+			let (x, y) = (distance, 3. * distance);
 			var_scene.update_rot_var(CUBE_ROTATION, (x, y, 0.0).into());
 			frame_renderer.render(var_scene.as_three_scene(), &frame_camera);
 		});
-		renderer.set_animation_loop(&closure);
-		// Forget the closure to prevent it from invalidating the callback when
-		// this function returns. This is a memory leak so should be done rarely.
-		closure.forget();
 	}
 
 	window.body().append_child(&renderer.dom_element()).expect("body must append renderer's dom element");

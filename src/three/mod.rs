@@ -1,3 +1,4 @@
+pub mod wrap;
 mod scene;
 mod renderer;
 mod xr;
