@@ -4,6 +4,16 @@ use wasm_bindgen::prelude::*;
 
 pub type Error = JsValue;
 
+pub mod console {
+	use wasm_bindgen::prelude::*;
+
+	#[wasm_bindgen]
+	extern "C" {
+		#[wasm_bindgen(js_namespace = console)]
+		pub fn log(s: &str);
+	}
+}
+
 pub struct Window(web_sys::Window);
 
 impl Window {
