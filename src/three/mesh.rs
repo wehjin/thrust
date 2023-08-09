@@ -5,7 +5,7 @@ use crate::three::{BoxGeometry, Euler, MeshBasicMaterial, Vector3};
 extern "C" {
 	pub type Mesh;
 	#[wasm_bindgen(constructor)]
-	pub fn new(geometry: &BoxGeometry, material: &MeshBasicMaterial) -> Mesh;
+	pub fn new(geometry: BoxGeometry, material: MeshBasicMaterial) -> Mesh;
 	#[wasm_bindgen(method, getter)]
 	pub fn rotation(this: &Mesh) -> Euler;
 	#[wasm_bindgen(method, getter)]
