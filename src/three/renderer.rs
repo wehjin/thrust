@@ -4,6 +4,7 @@ use crate::three::{PerspectiveCamera, Scene, WebXRManager};
 
 #[wasm_bindgen(module = "/node_modules/three/build/three.module.js")]
 extern "C" {
+	#[derive(Clone, Default)]
 	pub type WebGLRenderer;
 	#[wasm_bindgen(constructor)]
 	pub fn new() -> WebGLRenderer;

@@ -3,6 +3,7 @@ use crate::three::{Mesh, PerspectiveCamera};
 
 #[wasm_bindgen(module = "/node_modules/three/build/three.module.js")]
 extern "C" {
+	#[derive(Clone, Default)]
 	pub type Scene;
 	#[wasm_bindgen(constructor)]
 	pub fn new() -> Scene;

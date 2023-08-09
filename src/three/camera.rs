@@ -3,6 +3,7 @@ use crate::three::Vector3;
 
 #[wasm_bindgen(module = "/node_modules/three/build/three.module.js")]
 extern "C" {
+	#[derive(Clone, Default)]
 	pub type PerspectiveCamera;
 	#[wasm_bindgen(constructor)]
 	pub fn new(fov: f64, aspect: f64, near: f64, far: f64) -> PerspectiveCamera;
