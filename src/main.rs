@@ -11,7 +11,6 @@ use crate::app::components::spin_target::SpinTarget;
 use crate::app::systems::spin_system::SpinSystem;
 use crate::dom::{Error};
 use crate::four::render_system::RenderSystem;
-use crate::three::Scene;
 
 fn main() -> Result<(), Error> {
 	wasm_logger::init(wasm_logger::Config::default());
@@ -38,14 +37,24 @@ fn main() -> Result<(), Error> {
 
 fn init_world(world: &mut World, scene: &three::Scene) {
 	add_cube(world, scene);
+
+	const HEIGHT: f64 = 0.050;
+	let mesh = {
+		let geometry = three::CylinderGeometry::new(1.5, 1.5, HEIGHT);
+		let material = three::MeshBasicMaterial::new();
+		material.color().set(0.47, 0.53, 0.60);
+		three::Mesh::new(geometry.as_ref(), material.as_ref())
+	};
+	mesh.position().set_y(-HEIGHT / 2.);
+	scene.add(&mesh);
 }
 
-fn add_cube(world: &mut World, scene: &Scene) {
+fn add_cube(world: &mut World, scene: &three::Scene) {
 	let mesh = {
 		let geometry = three::BoxGeometry::new(2., 1., 1.);
 		let material = three::MeshBasicMaterial::new();
-		material.color().set(0., 0., 255.);
-		three::Mesh::new(geometry, material)
+		material.color().set(0., 0., 1.);
+		three::Mesh::new(geometry.as_ref(), material.as_ref())
 	};
 	mesh.position().set_xyz(0., 1.6, -3.);
 	mesh.rotation().set(0., 0., 0.);

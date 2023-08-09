@@ -9,7 +9,7 @@ mod vector;
 mod euler;
 mod color;
 mod geometry;
-mod mesh_material;
+mod material;
 
 pub use scene::*;
 pub use renderer::*;
@@ -21,5 +21,5 @@ pub use vector::*;
 pub use euler::*;
 pub use color::*;
 pub use geometry::*;
-pub use mesh_material::*;
+pub use material::*;
 
