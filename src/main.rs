@@ -10,7 +10,7 @@ use crate::app::components::now_in_seconds::NowInSeconds;
 use crate::app::components::spin_target::SpinTarget;
 use crate::app::systems::spin_system::SpinSystem;
 use crate::dom::{Error};
-use crate::four::RenderSystem;
+use crate::four::render_system::RenderSystem;
 
 fn main() -> Result<(), Error> {
 	wasm_logger::init(wasm_logger::Config::default());
