@@ -7,35 +7,28 @@ use std::f64::consts::PI;
 use wasm_bindgen::prelude::*;
 use dom::Window;
 use three::{WebGLRenderer};
-use crate::builders::{VarSceneBuilder};
 use crate::dom::{Error};
-use crate::three::PerspectiveCamera;
+use crate::three::{PerspectiveCamera, Scene};
 use crate::three::wrap::set_animation_loop_with_forget;
 
 fn main() -> Result<(), Error> {
 	wasm_logger::init(wasm_logger::Config::default());
 	log::info!("Boo!");
 
-	let (x, y) = (0.0, 0.0);
-	const GEOMETRY: &'static str = "geometry";
-	const MATERIAL: &'static str = "material";
-	const CUBE: &'static str = "cube";
-	const CUBE_ROTATION: &'static str = "rotation";
-	let var_scene = {
-		let mut builder = VarSceneBuilder::new();
-		builder.add_geo_box(GEOMETRY, (2.0, 1.0, 1.0).into());
-		builder.add_mat_mesh_basic(MATERIAL, (255.0, 0.0, 0.0).into());
-		builder.add_var_mesh(CUBE, GEOMETRY, MATERIAL);
-		builder.add_close_var_rot(CUBE_ROTATION, (x, y, 0.0).into());
-		builder.close_var_mesh();
-		builder.to_var_scene()
-	};
+	let geometry = three::BoxGeometry::new(2., 1., 1.);
+	let material = three::MeshBasicMaterial::new();
+	material.color().set(0., 0., 255.);
+	let mesh = three::Mesh::new(&geometry, &material);
+	mesh.position().set_xyz(0., 1.6, -3.);
+	let rotation = mesh.rotation();
+	rotation.set(0., 0., 0.);
+	let scene = Scene::new();
+	scene.add(&mesh);
 	let window = Window::connect();
 	let (inner_width, inner_height) = window.inner_size();
 
 	let camera = three::immersive_camera(inner_width, inner_height);
-	var_scene.as_three_scene().add_camera(&camera);
-
+	scene.add_camera(&camera);
 	let renderer = WebGLRenderer::new();
 	renderer.set_pixel_ratio(window.as_dom_window().device_pixel_ratio());
 	renderer.set_size(inner_width as isize, inner_height as isize, false);
@@ -49,8 +42,8 @@ fn main() -> Result<(), Error> {
 			let seconds = time / 1000.;
 			let distance = VELOCITY * seconds;
 			let (x, y) = (distance, 3. * distance);
-			var_scene.update_rot_var(CUBE_ROTATION, (x, y, 0.0).into());
-			frame_renderer.render(var_scene.as_three_scene(), &frame_camera);
+			rotation.set(x, y, 0.0);
+			frame_renderer.render(&scene, &frame_camera);
 		});
 	}
 

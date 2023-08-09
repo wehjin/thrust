@@ -49,9 +49,7 @@ impl VarSceneBuilder {
 }
 
 impl VarSceneBuilder {
-	pub(crate) fn add_var_mesh(&mut self,
-	                           name: impl AsRef<str>,
-	                           geometry: impl AsRef<str>, material: impl AsRef<str>) {
+	pub fn add_var_mesh(&mut self, name: impl AsRef<str>, geometry: impl AsRef<str>, material: impl AsRef<str>) {
 		let geometry = self.find_box_geo(geometry).unwrap();
 		let material = self.find_mesh_basic_mat(material).unwrap();
 		let mesh = three::Mesh::new(geometry, material);
@@ -59,12 +57,12 @@ impl VarSceneBuilder {
 		let var_mesh_builder = VarMeshBuilder::new(name, mesh);
 		self.var_mesh_builder = Some(var_mesh_builder);
 	}
-	pub(crate) fn add_close_var_rot(&mut self, name: impl AsRef<str>, xyz: Xyz) {
+	pub fn add_close_var_rot(&mut self, name: impl AsRef<str>, xyz: Xyz) {
 		let mut var_mesh_builder = self.var_mesh_builder.take().unwrap();
 		var_mesh_builder.add_var_rot(name, xyz);
 		self.var_mesh_builder = Some(var_mesh_builder);
 	}
-	pub(crate) fn close_var_mesh(&mut self) {
+	pub fn close_var_mesh(&mut self) {
 		let var_mesh = self.var_mesh_builder.take().unwrap();
 		let (name, var_mesh) = var_mesh.to_var_mesh();
 		if let Some((rot_name, var_rot)) = var_mesh.find_var_rot() {
