@@ -4,6 +4,8 @@ pub mod basics;
 pub mod four;
 pub mod app;
 
+use std::cell::RefCell;
+use std::rc::Rc;
 use specs::{Builder, Component, DispatcherBuilder, Join, Read, ReadStorage, System, VecStorage, World, WorldExt};
 use dom::Window;
 use crate::dom::{console, Error};
@@ -53,7 +55,6 @@ fn main() -> Result<(), Error> {
 	log::info!("Boo!");
 	let window = Window::connect();
 	let renderer = four::Renderer::new(&window);
-
 	let mut world = World::new();
 	world.register::<Cube>();
 	let color = init_world(renderer.scene());
@@ -61,29 +62,40 @@ fn main() -> Result<(), Error> {
 	world.insert(ActiveColor::from_index(color_idx));
 	world.create_entity().with(Cube { color }).build();
 	world.insert(renderer.clone());
-	dispatch_world(&mut world);
 
-	window.add_and_forget_keydown_listener(move |event: web_sys::KeyboardEvent| {
-		let key = &event.key();
-		console::log(&format!("keypress: {}", key));
-		if key == "c" {
-			color_idx += 1;
-			{
-				let mut write_color = world.write_resource::<ActiveColor>();
-				*write_color = ActiveColor::from_index(color_idx);
+	let world = Rc::new(RefCell::new(world));
+	dispatch_world(&world);
+	window.add_and_forget_keydown_listener({
+		let world = world.clone();
+		move |event: web_sys::KeyboardEvent| {
+			let key = &event.key();
+			console::log(&format!("keypress: {}", key));
+			if key == "c" {
+				color_idx += 1;
+				{
+					let world = world.borrow();
+					let mut write_color = world.write_resource::<ActiveColor>();
+					*write_color = ActiveColor::from_index(color_idx);
+				}
 			}
-			dispatch_world(&mut world);
+		}
+	});
+	renderer.set_and_forget_animation_loop({
+		let world = world.clone();
+		move |_time_delta| {
+			dispatch_world(&world);
 		}
 	});
 	Ok(())
 }
 
-fn dispatch_world(mut world: &mut World) {
+fn dispatch_world(world: &Rc<RefCell<World>>) {
 	let mut dispatcher = DispatcherBuilder::new()
 		.with(UpdateCubeColor, "update_cube_color", &[])
 		.with_thread_local(RenderSystem)
 		.build();
-	dispatcher.dispatch(&mut world);
+	let mut world = world.borrow_mut();
+	dispatcher.dispatch(&world);
 	world.maintain();
 }
 

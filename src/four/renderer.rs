@@ -19,10 +19,11 @@ impl Renderer {
 		renderer.set_pixel_ratio(window.as_dom_window().device_pixel_ratio());
 		renderer.set_size(width as isize, height as isize, false);
 		renderer.xr().set_enabled(true);
-		// TODO Move the listener into main so that the world can update when the window resizes.
+		window.body().append_child(&renderer.dom_element()).expect("body must append renderer's dom element");
+		window.body().append_child(&three::create_button(&renderer)).expect("append button");
 		window.add_and_forget_resize_listener({
-			let camera = camera.clone();
 			let renderer = renderer.clone();
+			let camera = camera.clone();
 			move |_event| {
 				let window = Window::connect();
 				let (width, height) = window.inner_size();
@@ -31,8 +32,6 @@ impl Renderer {
 				renderer.set_size(width as isize, height as isize, false);
 			}
 		});
-		window.body().append_child(&renderer.dom_element()).expect("body must append renderer's dom element");
-		window.body().append_child(&three::create_button(&renderer)).expect("append button");
 		Self { renderer, camera, scene }
 	}
 	pub fn camera(&self) -> &three::PerspectiveCamera { &self.camera }
