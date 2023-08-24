@@ -6,7 +6,7 @@ pub mod app;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-use specs::{Builder, Component, DispatcherBuilder, Join, Read, ReadStorage, System, VecStorage, World, WorldExt};
+use specs::{Builder, Component, Dispatcher, DispatcherBuilder, Join, Read, ReadStorage, System, VecStorage, World, WorldExt};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use dom::Window;
@@ -65,15 +65,20 @@ fn main() -> Result<(), Error> {
 	world.insert(ActiveColor::from_index(color_idx.get()));
 	world.create_entity().with(Cube { color }).build();
 	world.insert(renderer.clone());
-
 	let world = Rc::new(RefCell::new(world));
-	dispatch_world(&world);
+
+	let mut dispatcher = DispatcherBuilder::new()
+		.with(UpdateCubeColor, "update_cube_color", &[])
+		.with_thread_local(RenderSystem)
+		.build();
+	dispatch_world(&mut dispatcher, &world);
 	renderer.set_and_forget_animation_loop({
 		let world = world.clone();
 		move |_time_delta| {
-			dispatch_world(&world);
+			dispatch_world(&mut dispatcher, &world);
 		}
 	});
+
 	{
 		let controller = renderer.xr().get_hand(0);
 		renderer.scene().add(&controller);
@@ -121,11 +126,7 @@ fn update_color(color_idx: &Rc<Cell<usize>>, world: &Rc<RefCell<World>>) {
 	*write_color = ActiveColor::from_index(color_idx.get());
 }
 
-fn dispatch_world(world: &Rc<RefCell<World>>) {
-	let mut dispatcher = DispatcherBuilder::new()
-		.with(UpdateCubeColor, "update_cube_color", &[])
-		.with_thread_local(RenderSystem)
-		.build();
+fn dispatch_world(dispatcher: &mut Dispatcher, world: &Rc<RefCell<World>>) {
 	let mut world = world.borrow_mut();
 	dispatcher.dispatch(&world);
 	world.maintain();
