@@ -50,7 +50,7 @@ impl Window {
 		}
 		self.js_request_animation_frame(setup_cell.borrow().as_ref().unwrap());
 	}
-	pub fn add_resize_listener_with_forget(&self, f: impl FnMut(web_sys::UiEvent) + 'static) {
+	pub fn add_and_forget_resize_listener(&self, f: impl FnMut(web_sys::UiEvent) + 'static) {
 		let closure = Closure::<dyn FnMut(_)>::new(f);
 		self.0.add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref()).expect("add resize listener");
 		closure.forget();
@@ -65,6 +65,11 @@ impl Window {
 			self.0.inner_height().expect("window must have inner height")
 		);
 		(width, height)
+	}
+	pub fn add_and_forget_keydown_listener(&self, f: impl FnMut(web_sys::KeyboardEvent) + 'static) {
+		let closure = Closure::<dyn FnMut(_)>::new(f);
+		self.body().add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref()).expect("add key-down listener");
+		closure.forget();
 	}
 }
 

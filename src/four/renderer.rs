@@ -19,7 +19,8 @@ impl Renderer {
 		renderer.set_pixel_ratio(window.as_dom_window().device_pixel_ratio());
 		renderer.set_size(width as isize, height as isize, false);
 		renderer.xr().set_enabled(true);
-		window.add_resize_listener_with_forget({
+		// TODO Move the listener into main so that the world can update when the window resizes.
+		window.add_and_forget_resize_listener({
 			let camera = camera.clone();
 			let renderer = renderer.clone();
 			move |_event| {
@@ -37,7 +38,7 @@ impl Renderer {
 	pub fn camera(&self) -> &three::PerspectiveCamera { &self.camera }
 	pub fn scene(&self) -> &three::Scene { &self.scene }
 	pub fn as_three(&self) -> &three::WebGLRenderer { &self.renderer }
-	pub fn set_animation_loop_with_forget(&self, f: impl FnMut(f64) + 'static) {
+	pub fn set_and_forget_animation_loop(&self, f: impl FnMut(f64) + 'static) {
 		let closure = Closure::<dyn FnMut(f64)>::new(f);
 		self.renderer.set_animation_loop(&closure);
 		closure.forget();
