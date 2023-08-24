@@ -42,4 +42,5 @@ impl Renderer {
 		self.renderer.set_animation_loop(&closure);
 		closure.forget();
 	}
+	pub fn dom_element(&self) -> web_sys::HtmlElement { self.renderer.dom_element() }
 }
