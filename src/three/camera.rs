@@ -1,8 +1,9 @@
 use wasm_bindgen::prelude::*;
-use crate::three::Vector3;
+use crate::three::{Object3D, Vector3};
 
 #[wasm_bindgen(module = "/node_modules/three/build/three.module.js")]
 extern "C" {
+	#[wasm_bindgen(extends = Object3D)]
 	#[derive(Clone, Default)]
 	pub type PerspectiveCamera;
 	#[wasm_bindgen(constructor)]

@@ -10,6 +10,9 @@ mod euler;
 mod color;
 mod geometry;
 mod material;
+mod object3d;
+mod group;
+mod event_dispatcher;
 
 pub use scene::*;
 pub use renderer::*;
@@ -22,4 +25,7 @@ pub use euler::*;
 pub use color::*;
 pub use geometry::*;
 pub use material::*;
+pub use event_dispatcher::*;
+pub use object3d::*;
+pub use group::*;
 

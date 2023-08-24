@@ -4,12 +4,15 @@ pub mod basics;
 pub mod four;
 pub mod app;
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use specs::{Builder, Component, DispatcherBuilder, Join, Read, ReadStorage, System, VecStorage, World, WorldExt};
+use wasm_bindgen::closure::Closure;
+use wasm_bindgen::JsCast;
 use dom::Window;
 use crate::dom::{console, Error};
 use crate::four::render_system::RenderSystem;
+use crate::three::{EventDispatcher};
 
 #[derive(Default)]
 struct ActiveColor(f64, f64, f64);
@@ -58,35 +61,64 @@ fn main() -> Result<(), Error> {
 	let mut world = World::new();
 	world.register::<Cube>();
 	let color = init_world(renderer.scene());
-	let mut color_idx = 0;
-	world.insert(ActiveColor::from_index(color_idx));
+	let color_idx = Rc::new(Cell::new(0));
+	world.insert(ActiveColor::from_index(color_idx.get()));
 	world.create_entity().with(Cube { color }).build();
 	world.insert(renderer.clone());
 
 	let world = Rc::new(RefCell::new(world));
 	dispatch_world(&world);
-	window.add_and_forget_keydown_listener({
-		let world = world.clone();
-		move |event: web_sys::KeyboardEvent| {
-			let key = &event.key();
-			console::log(&format!("keypress: {}", key));
-			if key == "c" {
-				color_idx += 1;
-				{
-					let world = world.borrow();
-					let mut write_color = world.write_resource::<ActiveColor>();
-					*write_color = ActiveColor::from_index(color_idx);
-				}
-			}
-		}
-	});
 	renderer.set_and_forget_animation_loop({
 		let world = world.clone();
 		move |_time_delta| {
 			dispatch_world(&world);
 		}
 	});
+	{
+		let controller = renderer.xr().get_hand(0);
+		renderer.scene().add(&controller);
+		{
+			let closure = Closure::<dyn FnMut()>::new({
+				let world = world.clone();
+				let color_idx = color_idx.clone();
+				move || { update_color(&color_idx, &world); }
+			});
+			controller.unchecked_ref::<EventDispatcher>().add_event_listener("select", &closure);
+			closure.forget();
+		}
+	}
+	{
+		let controller = renderer.xr().get_hand(1);
+		renderer.scene().add(&controller);
+		{
+			let closure = Closure::<dyn FnMut()>::new({
+				let world = world.clone();
+				let color_idx = color_idx.clone();
+				move || { update_color(&color_idx, &world); }
+			});
+			controller.unchecked_ref::<EventDispatcher>().add_event_listener("select", &closure);
+			closure.forget();
+		}
+	}
+	window.add_and_forget_keydown_listener({
+		let world = world.clone();
+		let color_idx = color_idx.clone();
+		move |event: web_sys::KeyboardEvent| {
+			let key = &event.key();
+			console::log(&format!("keypress: {}", key));
+			if key == "c" {
+				update_color(&color_idx, &world);
+			}
+		}
+	});
 	Ok(())
+}
+
+fn update_color(color_idx: &Rc<Cell<usize>>, world: &Rc<RefCell<World>>) {
+	color_idx.set(color_idx.get() + 1);
+	let world = world.borrow();
+	let mut write_color = world.write_resource::<ActiveColor>();
+	*write_color = ActiveColor::from_index(color_idx.get());
 }
 
 fn dispatch_world(world: &Rc<RefCell<World>>) {

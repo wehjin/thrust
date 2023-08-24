@@ -14,7 +14,7 @@ impl Renderer {
 		let (width, height) = window.inner_size();
 		let camera = three::immersive_camera(width, height);
 		let scene = three::Scene::new();
-		scene.add_camera(&camera);
+		scene.add(&camera.as_ref());
 		let renderer = three::WebGLRenderer::new();
 		renderer.set_pixel_ratio(window.as_dom_window().device_pixel_ratio());
 		renderer.set_size(width as isize, height as isize, false);
@@ -43,4 +43,5 @@ impl Renderer {
 		closure.forget();
 	}
 	pub fn dom_element(&self) -> web_sys::HtmlElement { self.renderer.dom_element() }
+	pub fn xr(&self) -> three::WebXRManager { self.renderer.xr() }
 }
